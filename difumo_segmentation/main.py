@@ -58,6 +58,8 @@ def write_labels(input_labels_path, output_labels_path, regions_idx):
 
 
 def main():
+    #TODO compute pixel matter ratio for labels
+    #TODO visualization
     difumo_path = os.path.join(os.path.dirname(__file__), "..", "data", "raw")
     output_path = os.path.join(os.path.dirname(
         __file__), "..", "data", "processed")
