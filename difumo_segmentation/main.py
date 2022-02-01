@@ -70,12 +70,12 @@ def write_labels(input_labels_path, output_labels_path, regions_idx, gm_wm_csf_r
     with open(input_labels_path, 'r') as f:
         input_labels = f.readlines()
     # write new labels using extracted region indexes
-    output_labels = [input_labels[0].rstrip()]
+    output_labels = ["Region,Difumo_" + input_labels[0].rstrip()]
     for ii, region_idx in enumerate(regions_idx):
         # re-compute matter ratios
         # https://github.com/Parietal-INRIA/DiFuMo/blob/master/region_labeling/brain_masks_overlaps.py
         curr_region_metadatas = input_labels[region_idx + 1].split(",")
-        curr_region_metadatas[0] = str(ii + 1)
+        curr_region_metadatas = [str(ii + 1)] + curr_region_metadatas
         for jj in range(3):
             curr_region_metadatas[-(3 - jj)] = str(gm_wm_csf_ratios[ii, jj])
         curr_region_metadata = ",".join(curr_region_metadatas)
@@ -110,14 +110,16 @@ def main():
             atlas = nilearn.datasets.fetch_atlas_difumo(
                 dimension=dimension, resolution_mm=resolution, data_dir=difumo_path)
             # extract independent regions from difumo
-            extractor = nilearn.regions.RegionExtractor(maps_img=atlas.maps)
+            extractor = nilearn.regions.RegionExtractor(maps_img=atlas.maps,
+                                                        threshold=1,
+                                                        smoothing_fwhm=None)
             extractor.fit()
             extracted_regions_img = extractor.regions_img_
             regions_idx = extractor.index_
             num_extracted_regions = len(regions_idx)
             # saving atlas using original atlaas affine and header
             output_res_path = os.path.join(
-                output_path, "segmented_difumo_atlases", f"{num_extracted_regions}", f"{resolution}")
+                output_path, "segmented_difumo_atlases", f"{dimension}", f"{resolution}")
             os.makedirs(output_res_path, exist_ok=True)
             curr_atlas_path = os.path.join(output_res_path, "maps.nii.gz")
             nib.save(extracted_regions_img, curr_atlas_path)
@@ -129,7 +131,7 @@ def main():
             input_labels_path = os.path.join(
                 difumo_path, "difumo_atlases", f"{dimension}", f"labels_{dimension}_dictionary.csv")
             curr_labels_path = os.path.join(output_path, "segmented_difumo_atlases",
-                                            f"{num_extracted_regions}", f"labels_{num_extracted_regions}_dictionary.csv")
+                                            f"{dimension}", f"{resolution}", f"labels_{num_extracted_regions}_dictionary.csv")
             write_labels(input_labels_path, curr_labels_path,
                          regions_idx, gm_wm_csf_ratios)
 
