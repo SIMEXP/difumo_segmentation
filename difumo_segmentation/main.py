@@ -70,7 +70,8 @@ def write_labels(input_labels_path, output_labels_path, regions_idx, gm_wm_csf_r
     with open(input_labels_path, 'r') as f:
         input_labels = f.readlines()
     # write new labels using extracted region indexes
-    output_labels = ["Region,Difumo_" + input_labels[0].rstrip()]
+    header = "Region,Difumo_" + input_labels[0].rstrip()
+    output_labels = [header.replace(',', '\t')]
     for ii, region_idx in enumerate(regions_idx):
         # re-compute matter ratios
         # https://github.com/Parietal-INRIA/DiFuMo/blob/master/region_labeling/brain_masks_overlaps.py
@@ -78,7 +79,7 @@ def write_labels(input_labels_path, output_labels_path, regions_idx, gm_wm_csf_r
         curr_region_metadatas = [str(ii + 1)] + curr_region_metadatas
         for jj in range(3):
             curr_region_metadatas[-(3 - jj)] = str(gm_wm_csf_ratios[ii, jj])
-        curr_region_metadata = ",".join(curr_region_metadatas)
+        curr_region_metadata = "\t".join(curr_region_metadatas)
         output_labels += [curr_region_metadata]
     with open(output_labels_path, 'w') as f:
         f.write("\n".join(output_labels))
@@ -135,7 +136,7 @@ def main():
             input_labels_path = os.path.join(
                 difumo_path, "difumo_atlases", f"{dimension}", f"labels_{dimension}_dictionary.csv")
             curr_labels_path = os.path.join(output_res_path,
-                                            f"{file_name_root}.csv")
+                                            f"{file_name_root}.tsv")
             write_labels(input_labels_path, curr_labels_path,
                          regions_idx, gm_wm_csf_ratios)
 
