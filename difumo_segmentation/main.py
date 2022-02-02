@@ -113,7 +113,7 @@ def main():
     template_mask_sparse = None
     for dimension in dimensions:
         for resolution in resolutions:
-            file_name_root = f"tpl-{template}_res-{resolution}atlas-DiFuMo_desc-{dimension}dimensions_probseg"
+            file_name_root = f"tpl-{template}_res-{resolution}_atlas-DiFuMo_desc-{dimension}dimensions_probseg"
             # download difumo atlas using nilearn
             atlas = nilearn.datasets.fetch_atlas_difumo(
                 dimension=dimension, resolution_mm=resolution, data_dir=difumo_path)
