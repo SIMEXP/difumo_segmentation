@@ -70,7 +70,8 @@ def write_labels(input_labels_path, output_labels_path, regions_idx, gm_wm_csf_r
     with open(input_labels_path, 'r') as f:
         input_labels = f.readlines()
     # write new labels using extracted region indexes
-    output_labels = ["Region,Difumo_" + input_labels[0].rstrip()]
+    header = "Region,Difumo_" + input_labels[0].rstrip()
+    output_labels = [header.replace(',', '\t')]
     for ii, region_idx in enumerate(regions_idx):
         # re-compute matter ratios
         # https://github.com/Parietal-INRIA/DiFuMo/blob/master/region_labeling/brain_masks_overlaps.py
@@ -78,7 +79,7 @@ def write_labels(input_labels_path, output_labels_path, regions_idx, gm_wm_csf_r
         curr_region_metadatas = [str(ii + 1)] + curr_region_metadatas
         for jj in range(3):
             curr_region_metadatas[-(3 - jj)] = str(gm_wm_csf_ratios[ii, jj])
-        curr_region_metadata = ",".join(curr_region_metadatas)
+        curr_region_metadata = "\t".join(curr_region_metadatas)
         output_labels += [curr_region_metadata]
     with open(output_labels_path, 'w') as f:
         f.write("\n".join(output_labels))
@@ -92,6 +93,7 @@ def main():
         __file__), "..", "data", "processed")
     dimensions = [64, 128, 256, 512, 1024]
     resolutions = [2, 3]
+    template = "MNI152NLin2009cAsym"
     args = get_parser().parse_args()
     if args.input_path is not None:
         difumo_path = args.input_path
@@ -103,9 +105,15 @@ def main():
         resolutions = [int(args.res)]
     print(args)
 
+    # saving atlas using original atlaas affine and header
+    output_res_path = os.path.join(
+        output_path, "segmented_difumo_atlases", f"tpl-{template}", )
+    os.makedirs(output_res_path, exist_ok=True)
+
     template_mask_sparse = None
     for dimension in dimensions:
         for resolution in resolutions:
+            file_name_root = f"tpl-{template}_res-{resolution}atlas-DiFuMo_desc-{dimension}dimensions_probseg"
             # download difumo atlas using nilearn
             atlas = nilearn.datasets.fetch_atlas_difumo(
                 dimension=dimension, resolution_mm=resolution, data_dir=difumo_path)
@@ -117,11 +125,8 @@ def main():
             extracted_regions_img = extractor.regions_img_
             regions_idx = extractor.index_
             num_extracted_regions = len(regions_idx)
-            # saving atlas using original atlaas affine and header
-            output_res_path = os.path.join(
-                output_path, "segmented_difumo_atlases", f"{dimension}", f"{resolution}")
-            os.makedirs(output_res_path, exist_ok=True)
-            curr_atlas_path = os.path.join(output_res_path, "maps.nii.gz")
+            curr_atlas_path = os.path.join(output_res_path,
+                                           f"{file_name_root}.nii.gz")
             nib.save(extracted_regions_img, curr_atlas_path)
             # computing matter ratios
             if template_mask_sparse is None:
@@ -130,8 +135,8 @@ def main():
             # writing dictionnary labels
             input_labels_path = os.path.join(
                 difumo_path, "difumo_atlases", f"{dimension}", f"labels_{dimension}_dictionary.csv")
-            curr_labels_path = os.path.join(output_path, "segmented_difumo_atlases",
-                                            f"{dimension}", f"{resolution}", f"labels_{num_extracted_regions}_dictionary.csv")
+            curr_labels_path = os.path.join(output_res_path,
+                                            f"{file_name_root}.tsv")
             write_labels(input_labels_path, curr_labels_path,
                          regions_idx, gm_wm_csf_ratios)
 
