@@ -141,6 +141,9 @@ def main():
     with open(output_dataset_path, 'w') as f:
         json.dump(dataset_description, f, indent=2)
 
+    output_res_path = os.path.join(output_res_path, f"tpl-{template}")
+    os.makedirs(output_res_path, exist_ok=True)
+
     template_mask_sparse = None
     for dimension in dimensions:
         for resolution in resolutions:
