@@ -79,7 +79,7 @@ def plot_atlases_image(root_dir, percent=0.33, cmap=matplotlib.colors.ListedColo
                                                        draw_cross=False,
                                                        cmap=cmap, linewidths=1.5)
             save_dir = os.path.join(
-                root_dir, "reports", "imgs", "display_maps")
+                root_dir, "reports", "imgs", "display_maps", str(n_components), str(res))
             if not os.path.exists(save_dir):
                 os.makedirs(save_dir)
             plt.savefig(os.path.join(save_dir, f"{n_components}_{res}.jpg"),
@@ -87,7 +87,7 @@ def plot_atlases_image(root_dir, percent=0.33, cmap=matplotlib.colors.ListedColo
 
             annotated_names = pd.read_csv(label_path, delimiter="\t")
             save_dir = os.path.join(
-                root_dir, "reports", "imgs", str(n_components))
+                root_dir, "reports", "imgs", "component_maps", str(n_components), str(res))
             _save_results(annotated_names, maps_img, n_components, save_dir, res)
 
 
