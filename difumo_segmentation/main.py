@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import json
 import os
 import argparse
 import nibabel as nib
@@ -105,18 +106,53 @@ def main():
         resolutions = [int(args.res)]
     print(args)
 
-    # saving atlas using original atlaas affine and header
+    # saving atlas using original atlas affine and header
     output_res_path = os.path.join(
-        output_path, "segmented_difumo_atlases", f"tpl-{template}", )
+        output_path, "segmented_difumo_atlases")
+    os.makedirs(output_res_path, exist_ok=True)
+
+    # write dataset description
+    dataset_description = {
+        "BIDSVersion" : "1.6.0",
+        "Name" : "Segmented DiFuMo Atlas",
+        "DatasetType" : "derivative",
+        "GeneratedBy": [
+            {
+                "Name": "difumo_segmentation",
+                "Version": str(utils.get_version()),
+                "CodeURL": "https://github.com/SIMEXP/difumo_segmentation"
+            },
+        ],
+        "SourceDatasets": [
+            {
+                "DOI": "10.1016/j.neuroimage.2020.117126.",
+                "URL": "https://osf.io/k8w5s/",
+                "Version": "1"
+            },
+            {
+                "DOI": "10.1101/2021.02.10.430678",
+                "URL": "https://www.templateflow.org/",
+                "Version": "1.4.1"
+            }
+        ]
+    }
+
+    output_dataset_path = os.path.join(output_res_path, "dataset_description.json")
+    with open(output_dataset_path, 'w') as f:
+        json.dump(dataset_description, f, indent=2)
+
+    output_res_path = os.path.join(output_res_path, f"tpl-{template}")
     os.makedirs(output_res_path, exist_ok=True)
 
     template_mask_sparse = None
     for dimension in dimensions:
         for resolution in resolutions:
-            file_name_root = f"tpl-{template}_res-{resolution}_atlas-DiFuMo_desc-{dimension}dimensions_probseg"
+            file_name_root = f"tpl-{template}_res-{resolution:02d}_atlas-DiFuMo_desc-{dimension}dimensionsSegmented_probseg"
             # download difumo atlas using nilearn
             atlas = nilearn.datasets.fetch_atlas_difumo(
                 dimension=dimension, resolution_mm=resolution, data_dir=difumo_path)
+
+
             # extract independent regions from difumo
             extractor = nilearn.regions.RegionExtractor(maps_img=atlas.maps,
                                                         threshold=1,

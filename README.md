@@ -2,6 +2,8 @@
 
 This utility download and segment DiFuMo atlas, so each component is exactly one independent region.
 
+The output layout and naming convention follows [templateflow](https://github.com/templateflow/tpl-MNI152NLin2009cAsym).
+
 # Usage
 
 ```
