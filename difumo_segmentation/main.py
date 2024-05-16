@@ -49,7 +49,7 @@ def compute_template_sparse(map_img, template_dir):
     icbm = nilearn.datasets.fetch_icbm152_2009(data_dir=template_dir)
     masks = nilearn.image.load_img([icbm.gm, icbm.wm, icbm.csf])
     masks = nilearn.image.resample_to_img(masks, map_img)
-    m = masks.get_data()
+    m = masks.get_fdata()
     m = m.reshape([-1, 3])
     m = sparse.csr_matrix(m)
 
@@ -58,7 +58,7 @@ def compute_template_sparse(map_img, template_dir):
 
 def compute_ratios(extracted_regions_img, template_mask_sparse):
     # https://github.com/Parietal-INRIA/DiFuMo/blob/master/region_labeling/brain_masks_overlaps.py
-    dd = extracted_regions_img.get_data()
+    dd = extracted_regions_img.get_fdata()
     data = dd.reshape([-1, dd.shape[-1]]).T
     data = sparse.csr_matrix(data)
     overlaps = safe_sparse_dot(data, template_mask_sparse, dense_output=True)
@@ -78,8 +78,8 @@ def write_labels(input_labels_path, output_labels_path, regions_idx, gm_wm_csf_r
         # https://github.com/Parietal-INRIA/DiFuMo/blob/master/region_labeling/brain_masks_overlaps.py
         curr_region_metadatas = input_labels[region_idx + 1].split(",")
         curr_region_metadatas = [str(ii + 1)] + curr_region_metadatas
-        for jj in range(3):
-            curr_region_metadatas[-(3 - jj)] = str(gm_wm_csf_ratios[ii, jj])
+        # for jj in range(3):
+        #     curr_region_metadatas[-(3 - jj)] = str(gm_wm_csf_ratios[ii, jj])
         curr_region_metadata = "\t".join(curr_region_metadatas)
         output_labels += [curr_region_metadata]
     with open(output_labels_path, 'w') as f:
@@ -113,7 +113,7 @@ def main():
 
     # write dataset description
     dataset_description = {
-        "BIDSVersion" : "1.6.0",
+        "BIDSVersion" : "1.9.0",
         "Name" : "Segmented DiFuMo Atlas",
         "DatasetType" : "derivative",
         "GeneratedBy": [
@@ -156,7 +156,8 @@ def main():
             # extract independent regions from difumo
             extractor = nilearn.regions.RegionExtractor(maps_img=atlas.maps,
                                                         threshold=1,
-                                                        smoothing_fwhm=None)
+                                                        smoothing_fwhm=None,
+                                                        verbose=3)
             extractor.fit()
             extracted_regions_img = extractor.regions_img_
             regions_idx = extractor.index_
@@ -164,10 +165,13 @@ def main():
             curr_atlas_path = os.path.join(output_res_path,
                                            f"{file_name_root}.nii.gz")
             nib.save(extracted_regions_img, curr_atlas_path)
+
             # computing matter ratios
-            if template_mask_sparse is None:
-                template_mask_sparse = compute_template_sparse(atlas.maps, difumo_path)
-            gm_wm_csf_ratios = compute_ratios(extracted_regions_img, template_mask_sparse)
+            # if template_mask_sparse is None:
+            #     template_mask_sparse = compute_template_sparse(atlas.maps, difumo_path)
+            # gm_wm_csf_ratios = compute_ratios(extracted_regions_img, template_mask_sparse)
+            gm_wm_csf_ratios = None
+
             # writing dictionnary labels
             input_labels_path = os.path.join(
                 difumo_path, "difumo_atlases", f"{dimension}", f"labels_{dimension}_dictionary.csv")
